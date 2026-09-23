@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomMemberRole {
+  OWNER
+  MODERATOR
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+}
+
+enum FileStatus {
+  PENDING
+  READY
+  QUARANTINED
+  FAILED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  displayName  String
+  avatarUrl    String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  RoomMember[]
+  messages     Message[]
+  attachments  FileAttachment[] @relation("UploadedFiles")
+}
+
+model Room {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  members     RoomMember[]
+  messages    Message[]
+  attachments FileAttachment[]
+}
+
+model RoomMember {
+  id        String         @id @default(cuid())
+  roomId    String
+  userId    String
+  role      RoomMemberRole @default(MEMBER)
+  joinedAt  DateTime       @default(now())
+  room      Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model Message {
+  id          String      @id @default(cuid())
+  roomId      String
+  senderId    String
+  type        MessageType @default(TEXT)
+  body        String?
+  createdAt   DateTime    @default(now())
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachment  FileAttachment?
+
+  @@index([roomId, createdAt])
+}
+
+model FileAttachment {
+  id           String     @id @default(cuid())
+  roomId       String
+  uploaderId   String
+  messageId    String?    @unique
+  objectKey    String     @unique
+  originalName String
+  contentType  String
+  sizeBytes    BigInt
+  status       FileStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  room         Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  uploader     User       @relation("UploadedFiles", fields: [uploaderId], references: [id], onDelete: Cascade)
+  message      Message?   @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, createdAt])
+  @@index([status])
+}
