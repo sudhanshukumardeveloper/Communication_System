@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const objectKey = `uploads/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
 
-    if (!mediaBucket) {\n      throw new Error("AWS_S3_BUCKET is not configured");\n    }\n\n    const command = new PutObjectCommand({
+    if (!mediaBucket) {
+      throw new Error("AWS_S3_BUCKET is not configured");
+    }
+
+    const command = new PutObjectCommand({
       Bucket: mediaBucket,
       Key: objectKey,
       ContentType: contentType,
