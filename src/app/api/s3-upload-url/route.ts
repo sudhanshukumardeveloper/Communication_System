@@ -4,6 +4,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, mediaBucket } from "@/lib/s3";
 import crypto from "node:crypto";
 
+export const dynamic = "force-dynamic";
+
 const MAX_SINGLE_UPLOAD = 100 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
