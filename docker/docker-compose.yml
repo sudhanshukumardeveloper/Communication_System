@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: communication
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  coturn:
+    image: coturn/coturn:4.6
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    environment:
+      TURN_SECRET: ${TURN_SECRET:-development-secret}
+      TURN_REALM: ${TURN_REALM:-localhost}
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./coturn.conf:/etc/coturn/turnserver.conf:ro
+
+volumes:
+  pgdata:
