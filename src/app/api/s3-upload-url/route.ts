@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { s3, mediaBucket } from "@/lib/s3";
+import { getS3Client, mediaBucket } from "@/lib/s3";
 import crypto from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const objectKey = `uploads/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
 
-    const command = new PutObjectCommand({
+    if (!mediaBucket) {\n      throw new Error("AWS_S3_BUCKET is not configured");\n    }\n\n    const command = new PutObjectCommand({
       Bucket: mediaBucket,
       Key: objectKey,
       ContentType: contentType,
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       Metadata: { originalName: safeName }
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 600 });
+    const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: 600 });
 
     return NextResponse.json({ uploadUrl, objectKey, expiresIn: 600 });
   } catch {
