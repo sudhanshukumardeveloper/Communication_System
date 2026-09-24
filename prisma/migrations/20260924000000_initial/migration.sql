@@ -103,3 +103,39 @@ ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("sende
 ALTER TABLE "FileAttachment" ADD CONSTRAINT "FileAttachment_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "FileAttachment" ADD CONSTRAINT "FileAttachment_uploaderId_fkey" FOREIGN KEY ("uploaderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "FileAttachment" ADD CONSTRAINT "FileAttachment_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TYPE "RiskTier" AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+CREATE TYPE "ExecutionStatus" AS ENUM ('PLANNED', 'APPROVED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'DENIED');
+
+CREATE TABLE "AuditEvent" (
+  "id" TEXT NOT NULL,
+  "userId" TEXT,
+  "requestId" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "risk" "RiskTier" NOT NULL,
+  "status" "ExecutionStatus" NOT NULL,
+  "details" JSONB NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AuditEvent_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "AuditEvent_createdAt_idx" ON "AuditEvent"("createdAt");
+CREATE INDEX "AuditEvent_userId_createdAt_idx" ON "AuditEvent"("userId","createdAt");
+CREATE INDEX "AuditEvent_requestId_idx" ON "AuditEvent"("requestId");
+ALTER TABLE "AuditEvent" ADD CONSTRAINT "AuditEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE "ExecutionJob" (
+  "id" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "risk" "RiskTier" NOT NULL,
+  "status" "ExecutionStatus" NOT NULL DEFAULT 'PLANNED',
+  "payload" JSONB NOT NULL,
+  "result" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "startedAt" TIMESTAMP(3),
+  "finishedAt" TIMESTAMP(3),
+  CONSTRAINT "ExecutionJob_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "ExecutionJob_userId_createdAt_idx" ON "ExecutionJob"("userId","createdAt");
+CREATE INDEX "ExecutionJob_status_createdAt_idx" ON "ExecutionJob"("status","createdAt");
+ALTER TABLE "ExecutionJob" ADD CONSTRAINT "ExecutionJob_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
