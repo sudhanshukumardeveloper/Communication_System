@@ -44,6 +44,8 @@ model User {
   messages     Message[]
   attachments  FileAttachment[] @relation("UploadedFiles")
   sessions     AccessSession[]
+  auditEvents  AuditEvent[]
+  executionJobs ExecutionJob[]
 }
 
 model AccessRequest {
