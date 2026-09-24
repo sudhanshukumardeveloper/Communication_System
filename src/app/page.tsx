@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 type Risk = "LOW" | "MEDIUM" | "HIGH";
 
@@ -26,7 +26,7 @@ const audit = [
   ["18:41:17", "REQ-9842059", "Document search", "LOW", "FINISH"],
 ];
 
-function Icon({ children }: { children: React.ReactNode }) {
+function Icon({ children }: { children: ReactNode }) {
   return <span className="icon">{children}</span>;
 }
 
