@@ -23,10 +23,19 @@ export async function POST(request: Request, context: { params: Promise<{ roomId
   try {
     const body = await request.json();
     const text = typeof body.body === "string" ? body.body.trim() : "";
-    if (!text || text.length > 10000) return NextResponse.json({ error: "Message must be 1–10,000 characters" }, { status: 400 });
-    const message = await db.message.create({ data: { roomId, senderId: user.id, type: "TEXT", body: text }, include: { sender: { select: { id: true, displayName: true, avatarUrl: true } } } });
+    const attachmentId = typeof body.attachmentId === "string" ? body.attachmentId : null;
+    if (!text && !attachmentId) return NextResponse.json({ error: "Message body or attachment is required" }, { status: 400 });
+    if (text.length > 10000) return NextResponse.json({ error: "Message must be at most 10,000 characters" }, { status: 400 });
+    let type: "TEXT" | "FILE" = "TEXT";
+    if (attachmentId) {
+      const attachment = await db.fileAttachment.findUnique({ where: { id: attachmentId } });
+      if (!attachment || attachment.roomId !== roomId || attachment.uploaderId !== user.id || attachment.status !== "READY") return NextResponse.json({ error: "Attachment is not available" }, { status: 400 });
+      type = "FILE";
+    }
+    const message = await db.message.create({ data: { roomId, senderId: user.id, type, body: text || null, ...(attachmentId ? { attachment: { connect: { id: attachmentId } } } : {}) }, include: { sender: { select: { id: true, displayName: true, avatarUrl: true } }, attachment: true } });
     return NextResponse.json({ message }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("message create error", error);
     return NextResponse.json({ error: "Unable to send message" }, { status: 500 });
   }
 }
