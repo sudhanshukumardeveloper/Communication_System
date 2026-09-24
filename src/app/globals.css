@@ -67,7 +67,7 @@ nav { display:grid; gap:4px; }
 .pipeline-badge { font-size:9px; color:#718098; border:1px solid #1c2839; padding:7px 9px; border-radius:7px; }
 .pipeline { border:1px solid #1a2433; border-radius:12px; overflow:hidden; background:#0b1018; }
 .action-row { min-height:66px; display:grid; grid-template-columns:50px 1fr 76px 130px; align-items:center; gap:15px; padding:0 18px; position:relative; border-bottom:1px solid #141d29; }
-.action-row:last-child { border-bottom:0; }
+.action-row:last-child { border-bottom:0; }.action-row.clickable{cursor:pointer}.action-row.clickable:hover{background:#101721}
 .step-num { color:#48566b; font:10px ui-monospace,SFMono-Regular,Menlo,monospace; }
 .action-title { font-size:11px; color:#c9d2e1; }
 .mono { font:9px ui-monospace,SFMono-Regular,Menlo,monospace; color:#5e6d83; margin-top:4px; }
