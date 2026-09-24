@@ -125,7 +125,7 @@ export default function Home() {
 
             <section className="pipeline">
               {actions.map((a, i) => (
-                <div className="action-row" key={a.step}>
+                <div className={"action-row" + (a.risk === "HIGH" ? " clickable" : "")} key={a.step} onClick={() => a.risk === "HIGH" && setConfirm(true)}>
                   <div className="step-num">{String(a.step).padStart(2, "0")}</div>
                   <div className="action-main">
                     <div className="action-title">{a.desc}</div>
