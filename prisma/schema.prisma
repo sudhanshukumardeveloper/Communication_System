@@ -26,6 +26,13 @@ enum FileStatus {
   FAILED
 }
 
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+}
+
 model User {
   id           String       @id @default(cuid())
   email        String       @unique
@@ -36,13 +43,44 @@ model User {
   memberships  RoomMember[]
   messages     Message[]
   attachments  FileAttachment[] @relation("UploadedFiles")
+  sessions     AccessSession[]
+}
+
+model AccessRequest {
+  id            String              @id @default(cuid())
+  email         String
+  displayName   String
+  status        AccessRequestStatus @default(PENDING)
+  requestToken  String              @unique
+  approvalToken String              @unique
+  expiresAt     DateTime
+  approvedAt    DateTime?
+  deniedAt     DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([email, createdAt])
+  @@index([status, expiresAt])
+}
+
+model AccessSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Room {
-  id          String       @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   members     RoomMember[]
   messages    Message[]
   attachments FileAttachment[]
@@ -70,7 +108,7 @@ model Message {
   body        String?
   createdAt   DateTime    @default(now())
   room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender      User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
   attachment  FileAttachment?
 
   @@index([roomId, createdAt])
