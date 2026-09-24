@@ -12,7 +12,7 @@ export async function GET(_request: Request, context: { params: Promise<{ roomId
   const { roomId } = await context.params;
   if (!(await member(roomId, user.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const messages = await db.message.findMany({ where: { roomId }, include: { sender: { select: { id: true, displayName: true, avatarUrl: true } }, attachment: true }, orderBy: { createdAt: "asc" }, take: 100 });
-  return NextResponse.json({ messages });
+  return NextResponse.json({ messages: messages.map(m => ({ ...m, attachment: m.attachment ? { ...m.attachment, sizeBytes: m.attachment.sizeBytes.toString() } : null })) });
 }
 
 export async function POST(request: Request, context: { params: Promise<{ roomId: string }> }) {
