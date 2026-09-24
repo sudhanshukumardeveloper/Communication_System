@@ -132,3 +132,49 @@ model FileAttachment {
   @@index([roomId, createdAt])
   @@index([status])
 }
+
+enum RiskTier {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ExecutionStatus {
+  PLANNED
+  APPROVED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  DENIED
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  requestId   String
+  action      String
+  risk        RiskTier
+  status      ExecutionStatus
+  details     Json
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([requestId])
+}
+
+model ExecutionJob {
+  id          String          @id @default(cuid())
+  userId      String
+  action      String
+  risk        RiskTier
+  status      ExecutionStatus @default(PLANNED)
+  payload     Json
+  result      Json?
+  createdAt   DateTime        @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
