@@ -7,6 +7,7 @@ type Claims = { sub: string; room: string; exp: number };
 const routers = new Map<string, any>();
 const transports = new Map<string, any>();
 const producers = new Map<string, any>();
+const consumers = new Map<string, any>();
 
 function verifyToken(token: unknown): Claims | null {
   if (typeof token !== "string") return null;
@@ -92,12 +93,17 @@ app.post("/consume", async (req, res) => {
     const transport = transports.get(String(req.body.transportId));
     if (!transport) return res.status(404).json({ error: "Transport not found" });
     const consumer = await transport.consume({ producerId: producerInfo.producer.id, rtpCapabilities: req.body.rtpCapabilities, paused: true });
+    consumers.set(consumer.id, { consumer, roomId: claims.room });
+    consumer.on("transportclose", () => consumers.delete(consumer.id));
     res.json({ id: consumer.id, producerId: producerInfo.producer.id, kind: consumer.kind, rtpParameters: consumer.rtpParameters });
   } catch { res.status(400).json({ error: "Unable to consume media" }); }
 });
 
 app.post("/consumer/resume", async (req, res) => {
   const claims = auth(req, res); if (!claims) return;
+  const consumerInfo = consumers.get(String(req.body.consumerId));
+  if (!consumerInfo || consumerInfo.roomId !== claims.room) return res.status(404).json({ error: "Consumer not found" });
+  await consumerInfo.consumer.resume();
   res.json({ ok: true });
 });
 
